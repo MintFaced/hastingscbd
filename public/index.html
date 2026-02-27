@@ -463,18 +463,18 @@ L.marker([-39.6385, 176.8395], {
   icon: L.divIcon({ className: 'gap-zone-label', html: 'WEST', iconSize: [60,20], iconAnchor: [30,10] })
 }).addTo(map);
 
-// Business Membership Zone — bounded by St Aubyn St, Hastings St, Southampton St, Nelson St
+// Business Membership Zone — same angle as railway line, bisected by Railway Rd
 L.polygon([
-  [-39.637, 176.840],    // NW (St Aubyn & Nelson)
-  [-39.639, 176.848],    // NE (St Aubyn & Hastings St)
-  [-39.650, 176.845],    // SE (Southampton & Hastings St)
-  [-39.648, 176.837],    // SW (Southampton & Nelson)
+  [-39.6343, 176.8398],   // NW
+  [-39.6434, 176.8528],   // NE
+  [-39.6507, 176.8442],   // SE
+  [-39.6416, 176.8312],   // SW
 ], {
   color: '#34d399', weight: 2, dashArray: '6,6', fillColor: 'transparent', fillOpacity: 0, opacity: 0.7
 }).addTo(map);
 
 // BID zone label
-L.marker([-39.6365, 176.8450], {
+L.marker([-39.6360, 176.8470], {
   icon: L.divIcon({
     className: 'bid-zone-label',
     html: 'BUSINESS MEMBERSHIP ZONE',
