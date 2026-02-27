@@ -463,12 +463,12 @@ L.marker([-39.6385, 176.8395], {
   icon: L.divIcon({ className: 'gap-zone-label', html: 'WEST', iconSize: [60,20], iconAnchor: [30,10] })
 }).addTo(map);
 
-// Hastings City BID Membership Zone — rotated rectangle aligned with street grid
+// Hastings City Business Membership Zone — rotated rectangle aligned with street grid
 L.polygon([
-  [-39.636, 176.844],    // Top (north)
-  [-39.643, 176.851],    // Right (east)
-  [-39.650, 176.844],    // Bottom (south)
-  [-39.643, 176.837],    // Left (west)
+  [-39.6355, 176.8465],   // NE (top-right)
+  [-39.6385, 176.8395],   // NW (top-left)
+  [-39.6505, 176.8435],   // SW (bottom-left)
+  [-39.6475, 176.8505],   // SE (bottom-right)
 ], {
   color: '#34d399', weight: 2, dashArray: '6,6', fillColor: 'transparent', fillOpacity: 0, opacity: 0.7
 }).addTo(map);
@@ -477,9 +477,9 @@ L.polygon([
 L.marker([-39.6365, 176.8470], {
   icon: L.divIcon({
     className: 'bid-zone-label',
-    html: 'HASTINGS CITY BID ZONE',
-    iconSize: [180,20],
-    iconAnchor: [90,10]
+    html: 'BUSINESS MEMBERSHIP ZONE',
+    iconSize: [200,20],
+    iconAnchor: [100,10]
   })
 }).addTo(map);
 
