@@ -163,6 +163,7 @@
   .popup-zone.wz { background: rgba(96,165,250,0.15); color: var(--west); }
   .popup-zone.oz { background: rgba(136,136,136,0.15); color: var(--other); }
   .gap-zone-label { font-family: 'Space Mono', monospace !important; font-size: 10px !important; color: #555 !important; background: none !important; border: none !important; box-shadow: none !important; text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; }
+  .bid-zone-label { font-family: 'Space Mono', monospace !important; font-size: 9px !important; color: #34d399 !important; background: none !important; border: none !important; box-shadow: none !important; text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; opacity: 0.7; }
 
   .zone-divider-label {
     font-family: 'Space Mono', monospace !important;
@@ -254,6 +255,7 @@
       <div class="legend-item"><div class="legend-dot west-dot"></div>West</div>
       <div class="legend-item"><div class="legend-dot other-dot"></div>Other</div>
       <div class="legend-item"><div class="legend-dot gap"></div>Gap zone</div>
+      <div class="legend-item"><div class="legend-dot" style="background:transparent;border:2px dashed #34d399;"></div>BID zone</div>
     </div>
 
     <input type="text" class="search-box" placeholder="Search businesses..." id="search-input">
@@ -459,6 +461,26 @@ L.marker([-39.6465, 176.8465], {
 }).addTo(map);
 L.marker([-39.6385, 176.8395], {
   icon: L.divIcon({ className: 'gap-zone-label', html: 'WEST', iconSize: [60,20], iconAnchor: [30,10] })
+}).addTo(map);
+
+// Hastings City BID Membership Zone — rotated rectangle aligned with street grid
+L.polygon([
+  [-39.636, 176.844],    // Top (north)
+  [-39.643, 176.851],    // Right (east)
+  [-39.650, 176.844],    // Bottom (south)
+  [-39.643, 176.837],    // Left (west)
+], {
+  color: '#34d399', weight: 2, dashArray: '6,6', fillColor: 'transparent', fillOpacity: 0, opacity: 0.7
+}).addTo(map);
+
+// BID zone label
+L.marker([-39.6365, 176.8470], {
+  icon: L.divIcon({
+    className: 'bid-zone-label',
+    html: 'HASTINGS CITY BID ZONE',
+    iconSize: [180,20],
+    iconAnchor: [90,10]
+  })
 }).addTo(map);
 
 // ═══ MARKERS ═══
