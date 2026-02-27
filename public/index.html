@@ -344,12 +344,12 @@ const businesses = [
   { name: "Yabon French Baker", handle: "@yabonfrenchbaker", mentions: 1, lat: -39.6424, lng: 176.84427, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
   { name: "Red Bridge Coffee", handle: "@redbridgecoffee", mentions: 1, lat: -39.644, lng: 176.8451, street: "308 Heretaunga St East", category: "food", zone: "east", verified: true },
   { name: "Holly Bacon HB", handle: "@hollybaconhb", mentions: 1, lat: -39.64102, lng: 176.84245, street: "Heretaunga St West", category: "food", zone: "west", verified: false },
-  { name: "K-Chicken", handle: "@k__chicken_", mentions: 1, lat: -39.64053, lng: 176.84594, street: "Bay Plaza", category: "food", zone: "west", verified: false },
-  { name: "Toro Churro", handle: "@torochurrohastings", mentions: 1, lat: -39.64098, lng: 176.84599, street: "Bay Plaza", category: "food", zone: "west", verified: false },
-  { name: "St Pierre's Sushi", handle: "@stpierres_sushi", mentions: 1, lat: -39.64084, lng: 176.84593, street: "Bay Plaza", category: "food", zone: "west", verified: false },
-  { name: "Holy Crepe", handle: "@holycrepenz", mentions: 1, lat: -39.64043, lng: 176.84633, street: "Bay Plaza", category: "food", zone: "west", verified: false },
-  { name: "Tank Juice", handle: "@tankjuicenz", mentions: 1, lat: -39.64081, lng: 176.84619, street: "Bay Plaza", category: "food", zone: "west", verified: false },
-  { name: "Reburger", handle: "@reburgernz", mentions: 1, lat: -39.64076, lng: 176.84635, street: "Bay Plaza", category: "food", zone: "west", verified: false },
+  { name: "K-Chicken", handle: "@k__chicken_", mentions: 1, lat: -39.64053, lng: 176.84594, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
+  { name: "Toro Churro", handle: "@torochurrohastings", mentions: 1, lat: -39.64098, lng: 176.84599, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
+  { name: "St Pierre's Sushi", handle: "@stpierres_sushi", mentions: 1, lat: -39.64084, lng: 176.84593, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
+  { name: "Holy Crepe", handle: "@holycrepenz", mentions: 1, lat: -39.64043, lng: 176.84633, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
+  { name: "Tank Juice", handle: "@tankjuicenz", mentions: 1, lat: -39.64081, lng: 176.84619, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
+  { name: "Reburger", handle: "@reburgernz", mentions: 1, lat: -39.64076, lng: 176.84635, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
   { name: "Taiea Clothing", handle: "@_taiea", mentions: 1, lat: -39.6447, lng: 176.8458, street: "325 Heretaunga St East", category: "retail", zone: "east", verified: true },
   { name: "The Tile Shed", handle: "@tileshednz", mentions: 1, lat: -39.644, lng: 176.8425, street: "201 Eastbourne St", category: "retail", zone: "east", verified: true },
   { name: "Lighting Direct", handle: "@lightingdirectnz", mentions: 1, lat: -39.64254, lng: 176.84506, street: "Eastbourne St", category: "retail", zone: "east", verified: false },
@@ -369,7 +369,7 @@ const businesses = [
   { name: "Whitcoulls", handle: "@whitcoulls_nz", mentions: 1, lat: -39.64083, lng: 176.84206, street: "Heretaunga St West", category: "retail", zone: "west", verified: false },
   { name: "EB Games", handle: "@ebgamesnz", mentions: 1, lat: -39.64094, lng: 176.84208, street: "Heretaunga St West", category: "retail", zone: "west", verified: false },
   { name: "Number One Shoes", handle: "@numberoneshoesandhannahs", mentions: 1, lat: -39.64072, lng: 176.84233, street: "Heretaunga St West", category: "retail", zone: "west", verified: false },
-  { name: "Bits n Bobear", handle: "@bitsnbobear", mentions: 1, lat: -39.6407, lng: 176.84586, street: "Bay Plaza", category: "retail", zone: "west", verified: false },
+  { name: "Bits n Bobear", handle: "@bitsnbobear", mentions: 1, lat: -39.6407, lng: 176.84586, street: "Heretaunga St East", category: "retail", zone: "east", verified: false },
   { name: "Saddlery Warehouse", handle: "@saddlery_warehouse", mentions: 1, lat: -39.64068, lng: 176.84211, street: "Heretaunga St West", category: "retail", zone: "west", verified: false },
   { name: "Rivers to Ranges", handle: "@rivers_to_ranges", mentions: 1, lat: -39.64141, lng: 176.84245, street: "Heretaunga St West", category: "retail", zone: "west", verified: false },
   { name: "Luminescent Nails", handle: "@luminescent_nailsalon", mentions: 1, lat: -39.6422, lng: 176.8439, street: "124 Heretaunga St East", category: "services", zone: "east", verified: true },
@@ -420,18 +420,15 @@ const map = L.map('map', { zoomControl: false, attributionControl: false }).setV
 L.control.zoom({ position: 'topright' }).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
-// Railway line runs NW to SE — define the two edge points
-// Slope from known points: lat drops ~0.0013 per 0.001 lng decrease
-// Extending to full map bounds
-const rlTop = [-39.632, 176.849];   // Top edge of map
-const rlBot = [-39.653, 176.835];   // Bottom edge of map
+// Railway line runs NW to SE — rotated to match actual Railway Rd angle
+const rlTop = [-39.6281, 176.8623];  // Extended top (NE edge)
+const rlBot = [-39.6569, 176.8217];  // Extended bottom (SW edge)
 
 // East zone highlight — everything east/right of the diagonal railway line
 L.polygon([
   rlTop,
-  [-39.632, 176.855],    // NE corner
-  [-39.653, 176.855],    // SE corner
-  [-39.653, 176.835],    // Bottom of railway line
+  [-39.625, 176.860],    // NE corner
+  [-39.660, 176.860],    // SE corner
   rlBot,
 ], {
   color: '#ff4d4d', weight: 1.5, dashArray: '6,4', fillColor: '#ff4d4d', fillOpacity: 0.04
@@ -440,14 +437,14 @@ L.polygon([
 // West zone highlight — everything west/left of the diagonal railway line
 L.polygon([
   rlTop,
-  [-39.632, 176.830],    // NW corner
-  [-39.653, 176.830],    // SW corner
+  [-39.625, 176.820],    // NW corner
+  [-39.660, 176.820],    // SW corner
   rlBot,
 ], {
   color: '#60a5fa', weight: 1.5, dashArray: '6,4', fillColor: '#60a5fa', fillOpacity: 0.04
 }).addTo(map);
 
-// Divider line along Railway Rd (diagonal NW to SE, edge to edge)
+// Divider line along Railway Rd (diagonal, edge to edge)
 L.polyline([rlTop, rlBot], {
   color: '#fbbf24', weight: 2, dashArray: '8,6', opacity: 0.7
 }).addTo(map);
