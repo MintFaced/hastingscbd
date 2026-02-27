@@ -420,30 +420,35 @@ const map = L.map('map', { zoomControl: false, attributionControl: false }).setV
 L.control.zoom({ position: 'topright' }).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
+// Railway line runs NW to SE — define the two edge points
+// Slope from known points: lat drops ~0.0013 per 0.001 lng decrease
+// Extending to full map bounds
+const rlTop = [-39.632, 176.849];   // Top edge of map
+const rlBot = [-39.653, 176.835];   // Bottom edge of map
+
 // East zone highlight — everything east/right of the diagonal railway line
 L.polygon([
-  [-39.635, 176.8475],   // Railway line top (NW end)
-  [-39.635, 176.852],    // NE corner
-  [-39.650, 176.852],    // SE corner
-  [-39.650, 176.842],    // SW corner (map edge)
-  [-39.648, 176.838],    // Railway line bottom (SE end)
+  rlTop,
+  [-39.632, 176.855],    // NE corner
+  [-39.653, 176.855],    // SE corner
+  [-39.653, 176.835],    // Bottom of railway line
+  rlBot,
 ], {
   color: '#ff4d4d', weight: 1.5, dashArray: '6,4', fillColor: '#ff4d4d', fillOpacity: 0.04
 }).addTo(map);
 
 // West zone highlight — everything west/left of the diagonal railway line
 L.polygon([
-  [-39.635, 176.8475],   // Railway line top (NW end)
-  [-39.635, 176.832],    // NW corner
-  [-39.650, 176.832],    // SW corner
-  [-39.650, 176.842],    // SE corner (map edge)
-  [-39.648, 176.838],    // Railway line bottom (SE end)
+  rlTop,
+  [-39.632, 176.830],    // NW corner
+  [-39.653, 176.830],    // SW corner
+  rlBot,
 ], {
   color: '#60a5fa', weight: 1.5, dashArray: '6,4', fillColor: '#60a5fa', fillOpacity: 0.04
 }).addTo(map);
 
-// Divider line along Railway Rd (diagonal NW to SE)
-L.polyline([[-39.635, 176.8475], [-39.648, 176.838]], {
+// Divider line along Railway Rd (diagonal NW to SE, edge to edge)
+L.polyline([rlTop, rlBot], {
   color: '#fbbf24', weight: 2, dashArray: '8,6', opacity: 0.7
 }).addTo(map);
 
