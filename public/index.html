@@ -420,31 +420,43 @@ const map = L.map('map', { zoomControl: false, attributionControl: false }).setV
 L.control.zoom({ position: 'topright' }).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
-// East zone highlight
-L.polygon([[-39.6345,176.8433],[-39.6345,176.8520],[-39.6460,176.8520],[-39.6460,176.8433]], {
+// East zone highlight — everything east/right of the diagonal railway line
+L.polygon([
+  [-39.635, 176.8475],   // Railway line top (NW end)
+  [-39.635, 176.852],    // NE corner
+  [-39.650, 176.852],    // SE corner
+  [-39.650, 176.842],    // SW corner (map edge)
+  [-39.648, 176.838],    // Railway line bottom (SE end)
+], {
   color: '#ff4d4d', weight: 1.5, dashArray: '6,4', fillColor: '#ff4d4d', fillOpacity: 0.04
 }).addTo(map);
 
-// West zone highlight
-L.polygon([[-39.6345,176.8350],[-39.6345,176.8433],[-39.6460,176.8433],[-39.6460,176.8350]], {
+// West zone highlight — everything west/left of the diagonal railway line
+L.polygon([
+  [-39.635, 176.8475],   // Railway line top (NW end)
+  [-39.635, 176.832],    // NW corner
+  [-39.650, 176.832],    // SW corner
+  [-39.650, 176.842],    // SE corner (map edge)
+  [-39.648, 176.838],    // Railway line bottom (SE end)
+], {
   color: '#60a5fa', weight: 1.5, dashArray: '6,4', fillColor: '#60a5fa', fillOpacity: 0.04
 }).addTo(map);
 
-// Divider line at Railway Rd
-L.polyline([[-39.6345, 176.8433], [-39.6460, 176.8433]], {
+// Divider line along Railway Rd (diagonal NW to SE)
+L.polyline([[-39.635, 176.8475], [-39.648, 176.838]], {
   color: '#fbbf24', weight: 2, dashArray: '8,6', opacity: 0.7
 }).addTo(map);
 
-L.marker([-39.6355, 176.8433], {
-  icon: L.divIcon({ className: 'zone-divider-label', html: '← WEST | RAILWAY RD | EAST →', iconSize: [220,22], iconAnchor: [110,11] })
+L.marker([-39.6385, 176.8445], {
+  icon: L.divIcon({ className: 'zone-divider-label', html: 'RAILWAY RD', iconSize: [120,22], iconAnchor: [60,11] })
 }).addTo(map);
 
 // Zone labels on map
-L.marker([-39.6450, 176.8475], {
-  icon: L.divIcon({ className: 'gap-zone-label', html: 'EAST ZONE', iconSize: [100,20], iconAnchor: [50,10] })
+L.marker([-39.6465, 176.8465], {
+  icon: L.divIcon({ className: 'gap-zone-label', html: 'EAST', iconSize: [60,20], iconAnchor: [30,10] })
 }).addTo(map);
-L.marker([-39.6450, 176.8390], {
-  icon: L.divIcon({ className: 'gap-zone-label', html: 'WEST ZONE', iconSize: [100,20], iconAnchor: [50,10] })
+L.marker([-39.6385, 176.8395], {
+  icon: L.divIcon({ className: 'gap-zone-label', html: 'WEST', iconSize: [60,20], iconAnchor: [30,10] })
 }).addTo(map);
 
 // ═══ MARKERS ═══
