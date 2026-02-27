@@ -291,7 +291,7 @@ const businesses = [
   { name: "Brave Brewing Co", handle: "@bravebrewingco", mentions: 8, lat: -39.6426, lng: 176.8456, street: "205 Queen St East", category: "food", zone: "east", verified: true },
   { name: "Rush Munro's", handle: "@rushmunros", mentions: 7, lat: -39.6432, lng: 176.8441, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
   { name: "Your Local Focal", handle: "@yourlocalfocal", mentions: 5, lat: -39.6426, lng: 176.84396, street: "Heretaunga St East", category: "arts", zone: "east", verified: false },
-  { name: "Waiaro Water Centre", handle: "@waiarohawatercentre", mentions: 5, lat: -39.6472, lng: 176.8414, street: "Queen St West", category: "arts", zone: "west", verified: false },
+  { name: "Waiaro Water Centre", handle: "@waiarohawatercentre", mentions: 5, lat: -39.6472, lng: 176.8414, street: "Queen St West", category: "arts", zone: "east", verified: false },
   { name: "Hastings Art Gallery", handle: "@hastingsartgallery", mentions: 5, lat: -39.6442, lng: 176.8423, street: "Eastbourne St", category: "arts", zone: "east", verified: false },
   { name: "Long Island Deli", handle: "@longislanddeli", mentions: 4, lat: -39.6444, lng: 176.8456, street: "319 Heretaunga St East", category: "food", zone: "east", verified: true },
   { name: "Hastings Distillers", handle: "@hastingsdistillers", mentions: 4, lat: -39.6429, lng: 176.84415, street: "Heretaunga St East", category: "food", zone: "east", verified: false },
@@ -421,8 +421,8 @@ L.control.zoom({ position: 'topright' }).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
 // Railway line runs NW to SE — rotated to match actual Railway Rd angle
-const rlTop = [-39.6281, 176.8623];  // Extended top (NE edge)
-const rlBot = [-39.6569, 176.8217];  // Extended bottom (SW edge)
+const rlTop = [-39.6268, 176.8606];  // Extended top (NE edge)
+const rlBot = [-39.6582, 176.8234];  // Extended bottom (SW edge)
 
 // East zone highlight — everything east/right of the diagonal railway line
 L.polygon([
