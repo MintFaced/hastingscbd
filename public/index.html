@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hastings CBD — East vs West Coverage Split</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #1e1e2a;
+    --text: #e8e8ed;
+    --muted: #6b6b7b;
+    --accent: #ff4d4d;
+    --accent-glow: rgba(255, 77, 77, 0.3);
+    --green: #34d399;
+    --amber: #fbbf24;
+    --blue: #60a5fa;
+    --east: #ff4d4d;
+    --west: #60a5fa;
+    --other: #888;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+  .header { padding: 40px 40px 16px; max-width: 1440px; margin: 0 auto; }
+  .header .eyebrow { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  .header h1 { font-family: 'Space Mono', monospace; font-size: clamp(26px, 3.5vw, 44px); font-weight: 700; line-height: 1.1; margin-bottom: 12px; background: linear-gradient(135deg, #fff 0%, #aaa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header .subtitle { font-size: 15px; color: var(--muted); max-width: 800px; line-height: 1.6; }
+  .header .subtitle strong { color: var(--text); }
+
+  /* COMPARISON BAR */
+  .comparison-bar {
+    max-width: 1440px; margin: 0 auto; padding: 20px 40px;
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center;
+  }
+  .zone-card {
+    padding: 20px 24px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .zone-card.east { border-left: 4px solid var(--east); }
+  .zone-card.west { border-left: 4px solid var(--west); }
+
+  .zone-card .zone-label {
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .zone-card.east .zone-label { color: var(--east); }
+  .zone-card.west .zone-label { color: var(--west); }
+
+  .zone-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .zone-stat .num {
+    font-family: 'Space Mono', monospace; font-size: 24px; font-weight: 700;
+  }
+  .zone-card.east .num { color: var(--east); }
+  .zone-card.west .num { color: var(--west); }
+  .zone-stat .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+  .vs-badge {
+    font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700;
+    color: var(--muted); text-align: center;
+  }
+
+  /* SPLIT BAR VISUAL */
+  .split-visual {
+    max-width: 1440px; margin: 0 auto; padding: 0 40px 16px;
+  }
+  .split-bar-container {
+    display: flex; height: 32px; border-radius: 6px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .split-bar-east {
+    background: var(--east); display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: white;
+    transition: width 0.6s ease;
+  }
+  .split-bar-west {
+    background: var(--west); display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: white;
+    transition: width 0.6s ease;
+  }
+  .split-bar-other {
+    background: #2a2a3a; display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted);
+    transition: width 0.6s ease;
+  }
+  .split-labels {
+    display: flex; justify-content: space-between; margin-top: 6px;
+    font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  /* MAIN LAYOUT */
+  .main-content { display: grid; grid-template-columns: 1fr 380px; gap: 0; max-width: 1440px; margin: 16px auto 0; padding: 0 40px 40px; min-height: 650px; }
+  @media (max-width: 960px) {
+    .main-content { grid-template-columns: 1fr; }
+    .sidebar { max-height: 500px; border-radius: 0 0 12px 12px !important; border-left: 1px solid var(--border) !important; border-top: none !important; }
+    .map-container { border-radius: 12px 12px 0 0 !important; }
+    .comparison-bar { grid-template-columns: 1fr; }
+    .vs-badge { display: none; }
+  }
+
+  .map-container { position: relative; border-radius: 12px 0 0 12px; overflow: hidden; border: 1px solid var(--border); min-height: 650px; }
+  #map { width: 100%; height: 100%; min-height: 650px; }
+
+  .sidebar { background: var(--surface); border: 1px solid var(--border); border-left: none; border-radius: 0 12px 12px 0; overflow-y: auto; padding: 20px; }
+  .sidebar h3 { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+  .business-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
+  .business-item:hover { padding-left: 6px; }
+  .mention-count { font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700; min-width: 36px; text-align: center; }
+  .business-name { font-size: 13px; font-weight: 500; }
+  .business-street { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .zone-tag { display: inline-block; font-size: 8px; font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px; padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
+  .zone-tag.east-tag { background: rgba(255,77,77,0.15); color: var(--east); }
+  .zone-tag.west-tag { background: rgba(96,165,250,0.15); color: var(--west); }
+  .zone-tag.other-tag { background: rgba(136,136,136,0.15); color: var(--muted); }
+
+  .legend { display: flex; gap: 16px; padding: 12px 0; margin-bottom: 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-dot.east-dot { background: var(--east); box-shadow: 0 0 6px rgba(255,77,77,0.4); }
+  .legend-dot.west-dot { background: var(--west); box-shadow: 0 0 6px rgba(96,165,250,0.3); }
+  .legend-dot.other-dot { background: var(--other); }
+  .legend-dot.gap { background: transparent; border: 2px dashed var(--muted); }
+
+  .filter-bar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-btn { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .filter-btn.active[data-filter="east"] { background: var(--east); border-color: var(--east); }
+  .filter-btn.active[data-filter="west"] { background: var(--west); border-color: var(--west); }
+  .filter-btn.active[data-filter="other"] { background: var(--other); border-color: var(--other); }
+  .filter-btn:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+
+  .search-box { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; margin-bottom: 12px; outline: none; }
+  .search-box::placeholder { color: var(--muted); }
+  .search-box:focus { border-color: var(--accent); }
+
+  .insight-box { margin-top: 16px; padding: 14px; border-radius: 8px; }
+  .insight-box.east-insight { background: rgba(255,77,77,0.06); border: 1px solid rgba(255,77,77,0.15); }
+  .insight-box.west-insight { background: rgba(96,165,250,0.06); border: 1px solid rgba(96,165,250,0.15); }
+  .insight-box .insight-title { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .insight-box.east-insight .insight-title { color: var(--east); }
+  .insight-box.west-insight .insight-title { color: var(--west); }
+  .insight-box p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* Leaflet overrides */
+  .leaflet-container { background: #0d0d15 !important; }
+  .leaflet-popup-content-wrapper { background: var(--surface) !important; color: var(--text) !important; border-radius: 8px !important; border: 1px solid var(--border) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important; }
+  .leaflet-popup-tip { background: var(--surface) !important; }
+  .leaflet-popup-content { font-family: 'DM Sans', sans-serif !important; font-size: 13px !important; margin: 12px 16px !important; }
+  .popup-name { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+  .popup-mentions { font-family: 'Space Mono', monospace; font-size: 12px; }
+  .popup-mentions.east-m { color: var(--east); }
+  .popup-mentions.west-m { color: var(--west); }
+  .popup-mentions.other-m { color: var(--other); }
+  .popup-address { color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .popup-zone { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 2px 6px; border-radius: 3px; margin-top: 4px; }
+  .popup-zone.ez { background: rgba(255,77,77,0.15); color: var(--east); }
+  .popup-zone.wz { background: rgba(96,165,250,0.15); color: var(--west); }
+  .popup-zone.oz { background: rgba(136,136,136,0.15); color: var(--other); }
+  .gap-zone-label { font-family: 'Space Mono', monospace !important; font-size: 10px !important; color: #555 !important; background: none !important; border: none !important; box-shadow: none !important; text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; }
+
+  .zone-divider-label {
+    font-family: 'Space Mono', monospace !important;
+    font-size: 11px !important;
+    color: var(--amber) !important;
+    background: rgba(13,13,21,0.85) !important;
+    border: 1px solid rgba(251,191,36,0.3) !important;
+    border-radius: 4px !important;
+    padding: 3px 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  .map-legend-overlay {
+    position: absolute; top: 12px; left: 12px; z-index: 1000;
+    background: rgba(13,13,21,0.92); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; backdrop-filter: blur(8px);
+  }
+  .map-legend-overlay .ml-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .map-legend-overlay .ml-row:last-child { margin-bottom: 0; }
+  .ml-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .ml-dot.e { background: var(--east); box-shadow: 0 0 6px rgba(255,77,77,0.4); }
+  .ml-dot.w { background: var(--west); box-shadow: 0 0 6px rgba(96,165,250,0.3); }
+  .ml-dot.o { background: var(--other); }
+  .ml-label { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); }
+
+  .footer-note { max-width: 1440px; margin: 0 auto; padding: 0 40px 40px; font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="eyebrow">East vs West — @hastingscitynz Instagram · 200 Posts</div>
+  <h1>The Heretaunga Street Divide</h1>
+  <p class="subtitle">
+    Heretaunga Street is the spine of Hastings CBD. But the HCBA's Instagram coverage reveals a <strong>stark imbalance</strong> — 
+    the East end dominates, while West-end businesses paying the same BID rate receive significantly less promotion.
+  </p>
+</div>
+
+<div class="comparison-bar">
+  <div class="zone-card east">
+    <div class="zone-label">Heretaunga Street East</div>
+    <div class="zone-stats">
+      <div class="zone-stat"><div class="num" id="east-biz">0</div><div class="lbl">Businesses</div></div>
+      <div class="zone-stat"><div class="num" id="east-mentions">0</div><div class="lbl">Total mentions</div></div>
+      <div class="zone-stat"><div class="num" id="east-avg">0</div><div class="lbl">Avg per business</div></div>
+    </div>
+  </div>
+  <div class="vs-badge">VS</div>
+  <div class="zone-card west">
+    <div class="zone-label">Heretaunga Street West</div>
+    <div class="zone-stats">
+      <div class="zone-stat"><div class="num" id="west-biz">0</div><div class="lbl">Businesses</div></div>
+      <div class="zone-stat"><div class="num" id="west-mentions">0</div><div class="lbl">Total mentions</div></div>
+      <div class="zone-stat"><div class="num" id="west-avg">0</div><div class="lbl">Avg per business</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="split-visual">
+  <div class="split-bar-container">
+    <div class="split-bar-east" id="bar-east"></div>
+    <div class="split-bar-west" id="bar-west"></div>
+    <div class="split-bar-other" id="bar-other"></div>
+  </div>
+  <div class="split-labels">
+    <span style="color:var(--east)">← East</span>
+    <span>Share of total mentions</span>
+    <span style="color:var(--west)">West →</span>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="map-container">
+    <div id="map"></div>
+    <div class="map-legend-overlay">
+      <div class="ml-row"><div class="ml-dot e"></div><div class="ml-label">Heretaunga East</div></div>
+      <div class="ml-row"><div class="ml-dot w"></div><div class="ml-label">Heretaunga West</div></div>
+      <div class="ml-row"><div class="ml-dot o"></div><div class="ml-label">Other / Off Heretaunga</div></div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot east-dot"></div>East</div>
+      <div class="legend-item"><div class="legend-dot west-dot"></div>West</div>
+      <div class="legend-item"><div class="legend-dot other-dot"></div>Other</div>
+      <div class="legend-item"><div class="legend-dot gap"></div>Gap zone</div>
+    </div>
+
+    <input type="text" class="search-box" placeholder="Search businesses..." id="search-input">
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="east">East Only</button>
+      <button class="filter-btn" data-filter="west">West Only</button>
+      <button class="filter-btn" data-filter="other">Off-Street</button>
+    </div>
+
+    <h3 id="list-heading">All Businesses</h3>
+    <div id="business-list"></div>
+
+    <div class="insight-box east-insight" style="margin-top:16px">
+      <div class="insight-title">East Side Concentration</div>
+      <p>The hospitality strip from Sazio (112) to Taiea (325) receives the bulk of coverage. Brave Brewing (8×), Rush Munro's (7×), and the cluster around Craft & Social dominate the feed.</p>
+    </div>
+    <div class="insight-box west-insight" style="margin-top:10px">
+      <div class="insight-title">West Side Gap</div>
+      <p>West of the Railway Rd divide, coverage drops off sharply. Only a handful of businesses (Lolly Shop, Suzelle, Spex, Shampoo Plus) get mentioned — mostly once. The Bay Plaza end and beyond are near-invisible.</p>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">
+  Data: 200 of 831 posts from @hastingscitynz · Dec 2024 – Feb 2026 · East/West split at Railway Rd / Hastings St intersection.<br>
+  "East" = Heretaunga St East + Tribune + Queen St East corridor. "West" = Heretaunga St West + Bay Plaza + Karamu Rd end.<br>
+  Addresses verified where stated in captions. Full 831-post dataset would further strengthen findings.
+</div>
+
+<script>
+const businesses = [
+  // ═══ HERETAUNGA EAST + EAST-ADJACENT ═══
+  { name: "Brave Brewing Co", handle: "@bravebrewingco", mentions: 8, lat: -39.63765, lng: 176.84550, street: "205 Queen St East", category: "food", zone: "east", verified: true },
+  { name: "Rush Munro's", handle: "@rushmunros", mentions: 7, lat: -39.63845, lng: 176.84180, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Toitoi Venues", handle: "@toitoivenues", mentions: 18, lat: -39.63740, lng: 176.84240, street: "Hastings St South", category: "arts", zone: "east" },
+  { name: "Your Local Focal", handle: "@yourlocalfocal", mentions: 5, lat: -39.63850, lng: 176.84195, street: "Heretaunga St East", category: "arts", zone: "east" },
+  { name: "Hastings Art Gallery", handle: "@hastingsartgallery", mentions: 5, lat: -39.63880, lng: 176.84080, street: "Eastbourne St", category: "arts", zone: "east" },
+  { name: "Long Island Deli", handle: "@longislanddeli", mentions: 4, lat: -39.63695, lng: 176.84710, street: "319 Heretaunga St East", category: "food", zone: "east", verified: true },
+  { name: "Hastings Distillers", handle: "@hastingsdistillers", mentions: 4, lat: -39.63740, lng: 176.84580, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Common Room", handle: "@commonroomhb", mentions: 4, lat: -39.63790, lng: 176.84480, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "John's Bakery & Cafe", handle: "@johns.bakeryncafe", mentions: 4, lat: -39.63810, lng: 176.84380, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Kindred Road", handle: "@kindredroad", mentions: 4, lat: -39.63770, lng: 176.84540, street: "201 Queen St East", category: "retail", zone: "east", verified: true },
+  { name: "Blackbird Goods", handle: "@blackbirdgoods", mentions: 4, lat: -39.63805, lng: 176.84420, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "HD Libraries", handle: "@hdlibraries", mentions: 4, lat: -39.63890, lng: 176.84060, street: "Eastbourne St", category: "arts", zone: "east" },
+  { name: "Sazio", handle: "@sazio_nz", mentions: 3, lat: -39.63825, lng: 176.84300, street: "112 Heretaunga St East", category: "food", zone: "east", verified: true },
+  { name: "Fun Buns", handle: "@funbunsnz", mentions: 3, lat: -39.63800, lng: 176.84450, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Craft & Social", handle: "@craftandsocial", mentions: 3, lat: -39.63775, lng: 176.84520, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Hutchinsons Interiors", handle: "@hutchinsonsinteriors", mentions: 3, lat: -39.63750, lng: 176.84600, street: "Eastbourne St", category: "retail", zone: "east" },
+  { name: "Pom Pom Florals", handle: "@pompom_florals", mentions: 3, lat: -39.63808, lng: 176.84360, street: "212 Heretaunga St East", category: "retail", zone: "east", verified: true },
+  { name: "O Studio", handle: "@ostudio_hawkesbay", mentions: 3, lat: -39.63680, lng: 176.84520, street: "Tribune Precinct", category: "services", zone: "east" },
+  { name: "Tribune Precinct", handle: "@tribunehawkesbay", mentions: 3, lat: -39.63670, lng: 176.84530, street: "Tribune Precinct", category: "arts", zone: "east" },
+  { name: "Rosie O'Grady's", handle: "@rosieogradys_hb", mentions: 2, lat: -39.63785, lng: 176.84490, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Cranky Chicken", handle: "@crankychicken_nz", mentions: 2, lat: -39.63808, lng: 176.84345, street: "211 Heretaunga St East", category: "food", zone: "east", verified: true },
+  { name: "495 Wines", handle: "@495wines", mentions: 2, lat: -39.63760, lng: 176.84560, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Decibel Wines", handle: "@decibelwines", mentions: 2, lat: -39.63755, lng: 176.84570, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Coffee Aurum", handle: "@coffeeaurum", mentions: 2, lat: -39.63820, lng: 176.84320, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Rosina Eatery", handle: "@rosinaeatery__", mentions: 2, lat: -39.63830, lng: 176.84280, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Cupple Coffee", handle: "@cupple.coffee", mentions: 2, lat: -39.63815, lng: 176.84340, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Matangi NZ", handle: "@matangi_nz", mentions: 2, lat: -39.63810, lng: 176.84390, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Bendon Lingerie", handle: "@bendonlingerie", mentions: 2, lat: -39.63830, lng: 176.84270, street: "105 Heretaunga St East", category: "retail", zone: "east", verified: true },
+  { name: "Alexander's Menswear", handle: "@alexandershastings", mentions: 2, lat: -39.63815, lng: 176.84360, street: "215 Heretaunga St East", category: "retail", zone: "east", verified: true },
+  { name: "Velvet Nails & Beauty", handle: "@velvetnailslashes", mentions: 2, lat: -39.63690, lng: 176.84510, street: "Tribune Precinct", category: "services", zone: "east" },
+  { name: "Cupple NZ", handle: "@cupple.nz", mentions: 2, lat: -39.63818, lng: 176.84335, street: "Heretaunga St East", category: "services", zone: "east" },
+  { name: "Fotofest HB", handle: "@fotofest_hawkes_bay", mentions: 2, lat: -39.63712, lng: 176.84655, street: "308 Heretaunga St East", category: "arts", zone: "east" },
+  { name: "Atrium HB", handle: "@atriumhawkesbay", mentions: 2, lat: -39.63685, lng: 176.84515, street: "203 Queen St East", category: "arts", zone: "east", verified: true },
+  { name: "Ott in the City", handle: "@ottinthecity", mentions: 1, lat: -39.63795, lng: 176.84470, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Spooky's Pizzeria", handle: "@spookys.pizzeria", mentions: 1, lat: -39.63788, lng: 176.84500, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Cedric's", handle: "@cedricshastings", mentions: 1, lat: -39.63730, lng: 176.84230, street: "101 Hastings St South", category: "food", zone: "east", verified: true },
+  { name: "With Sugar On Top", handle: "@with_sugarontop", mentions: 1, lat: -39.63835, lng: 176.84260, street: "Landmark Square", category: "food", zone: "east" },
+  { name: "Pita Pit", handle: "@pitapitnz", mentions: 1, lat: -39.63840, lng: 176.84240, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Cafe Anatolia", handle: "@cafeanatolianz", mentions: 1, lat: -39.63850, lng: 176.84200, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Cafe at Westerman's", handle: "@cafeatwestermans", mentions: 1, lat: -39.63855, lng: 176.84190, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Mama's Donuts", handle: "@mamasdonutsnz", mentions: 1, lat: -39.63805, lng: 176.84400, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Yabon French Baker", handle: "@yabonfrenchbaker", mentions: 1, lat: -39.63798, lng: 176.84460, street: "Heretaunga St East", category: "food", zone: "east" },
+  { name: "Red Bridge Coffee", handle: "@redbridgecoffee", mentions: 1, lat: -39.63710, lng: 176.84660, street: "308 Heretaunga St East", category: "food", zone: "east", verified: true },
+  { name: "Bambina Pizzeria", handle: "@bambinapizzeria_hb", mentions: 1, lat: -39.63745, lng: 176.84175, street: "101 Russell St North", category: "food", zone: "east", verified: true },
+  { name: "Taiea Clothing", handle: "@_taiea", mentions: 1, lat: -39.63700, lng: 176.84720, street: "325 Heretaunga St East", category: "retail", zone: "east", verified: true },
+  { name: "The Tile Shed", handle: "@tileshednz", mentions: 1, lat: -39.63720, lng: 176.84190, street: "201 Eastbourne St", category: "retail", zone: "east", verified: true },
+  { name: "Lighting Direct", handle: "@lightingdirectnz", mentions: 1, lat: -39.63725, lng: 176.84200, street: "Eastbourne St", category: "retail", zone: "east" },
+  { name: "Coco & Co", handle: "@cocoandco.hb", mentions: 1, lat: -39.63843, lng: 176.84230, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Real World", handle: "@realworldnz", mentions: 1, lat: -39.63848, lng: 176.84210, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Thomson's Suits", handle: "@thomsonssuits", mentions: 1, lat: -39.63835, lng: 176.84250, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Grieve Diamond Jeweller", handle: "@grievediamondjeweller", mentions: 1, lat: -39.63838, lng: 176.84240, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Michael Hill", handle: "@michaelhillj", mentions: 1, lat: -39.63841, lng: 176.84235, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Pascoes", handle: "@pascoes_", mentions: 1, lat: -39.63844, lng: 176.84225, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Richard James Jeweller", handle: "@richardjames.jeweller", mentions: 1, lat: -39.63847, lng: 176.84215, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Naked Jeweller", handle: "@the_naked_jeweller_hb", mentions: 1, lat: -39.63850, lng: 176.84205, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Creative Treasures", handle: "@creativetreasuresgifts", mentions: 1, lat: -39.63812, lng: 176.84370, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Hustle Surf & Moto", handle: "@hustlesurfandmoto", mentions: 1, lat: -39.63802, lng: 176.84430, street: "Heretaunga St East", category: "retail", zone: "east" },
+  { name: "Luminescent Nails", handle: "@luminescent_nailsalon", mentions: 1, lat: -39.63828, lng: 176.84290, street: "124 Heretaunga St East", category: "services", zone: "east", verified: true },
+  { name: "Lumino Dentists", handle: "@luminothedentists", mentions: 1, lat: -39.63735, lng: 176.84590, street: "Eastbourne St", category: "services", zone: "east" },
+  { name: "Iconic Hair", handle: "@iconic_hairbeautymakeup", mentions: 1, lat: -39.63800, lng: 176.84440, street: "Heretaunga St East", category: "services", zone: "east" },
+  { name: "Skin & Tonic Room", handle: "@theskinandtonicroom", mentions: 1, lat: -39.63716, lng: 176.84670, street: "242 Heretaunga St East", category: "services", zone: "east", verified: true },
+  { name: "Lien Lashes", handle: "@lien_lashes_nailsbeauty", mentions: 1, lat: -39.63803, lng: 176.84435, street: "Heretaunga St East", category: "services", zone: "east" },
+  { name: "Mphosis Hair", handle: "@mphosishair", mentions: 1, lat: -39.63795, lng: 176.84455, street: "Heretaunga St East", category: "services", zone: "east" },
+  { name: "One Yoga Pilates", handle: "@one_yoga_pilates", mentions: 2, lat: -39.63700, lng: 176.84500, street: "Eastbourne St", category: "services", zone: "east" },
+  { name: "The Big Room", handle: "@thebig.room", mentions: 1, lat: -39.63812, lng: 176.84350, street: "202 Heretaunga St East", category: "arts", zone: "east", verified: true },
+  { name: "Arts Inc", handle: "@artsinc.heretaungaa", mentions: 1, lat: -39.63748, lng: 176.84168, street: "106 Russell St South", category: "arts", zone: "east", verified: true },
+  { name: "Cineverse", handle: "@cineversehastings", mentions: 1, lat: -39.63845, lng: 176.84220, street: "Heretaunga St East", category: "arts", zone: "east" },
+  { name: "Humanity Books", handle: "@humanitybooksandfinearts", mentions: 1, lat: -39.63810, lng: 176.84380, street: "Heretaunga St East", category: "arts", zone: "east" },
+
+  // ═══ HERETAUNGA WEST + WEST-ADJACENT ═══
+  { name: "The Lolly Shop", handle: "@lollyshopnz", mentions: 2, lat: -39.63870, lng: 176.84080, street: "245 Heretaunga St West", category: "food", zone: "west", verified: true },
+  { name: "Suzelle Lingerie", handle: "@suzellelingerie", mentions: 2, lat: -39.63855, lng: 176.84130, street: "108 Heretaunga St West", category: "retail", zone: "west", verified: true },
+  { name: "CoLab Hastings", handle: "@colabhastings", mentions: 1, lat: -39.63860, lng: 176.84120, street: "Heretaunga St West", category: "food", zone: "west" },
+  { name: "OMGoodness", handle: "@omggoodnessnz", mentions: 1, lat: -39.63868, lng: 176.84100, street: "Heretaunga St West", category: "food", zone: "west" },
+  { name: "Off the Track", handle: "@offthetrackhastings", mentions: 1, lat: -39.63872, lng: 176.84090, street: "Heretaunga St West", category: "food", zone: "west" },
+  { name: "The Artisan Cafe", handle: "@the.artisan.cafe", mentions: 1, lat: -39.63878, lng: 176.84070, street: "Heretaunga St West", category: "food", zone: "west" },
+  { name: "Holly Bacon HB", handle: "@hollybaconhb", mentions: 1, lat: -39.63882, lng: 176.84060, street: "Heretaunga St West", category: "food", zone: "west" },
+  { name: "Charm Eatery", handle: "@charmeatery_cafe_and_bar", mentions: 1, lat: -39.63910, lng: 176.83960, street: "108 Market St South", category: "food", zone: "west", verified: true },
+  { name: "K-Chicken", handle: "@k__chicken_", mentions: 1, lat: -39.63900, lng: 176.84010, street: "Bay Plaza", category: "food", zone: "west" },
+  { name: "Toro Churro", handle: "@torochurrohastings", mentions: 1, lat: -39.63903, lng: 176.84005, street: "Bay Plaza", category: "food", zone: "west" },
+  { name: "St Pierre's Sushi", handle: "@stpierres_sushi", mentions: 1, lat: -39.63906, lng: 176.84000, street: "Bay Plaza", category: "food", zone: "west" },
+  { name: "Holy Crepe", handle: "@holycrepenz", mentions: 1, lat: -39.63909, lng: 176.83995, street: "Bay Plaza", category: "food", zone: "west" },
+  { name: "Tank Juice", handle: "@tankjuicenz", mentions: 1, lat: -39.63912, lng: 176.83990, street: "Bay Plaza", category: "food", zone: "west" },
+  { name: "Reburger", handle: "@reburgernz", mentions: 1, lat: -39.63915, lng: 176.83985, street: "Bay Plaza", category: "food", zone: "west" },
+  { name: "Shampoo Plus", handle: "@shampooplusnz", mentions: 1, lat: -39.63862, lng: 176.84110, street: "209 Heretaunga St West", category: "retail", zone: "west", verified: true },
+  { name: "Spex Eyewear", handle: "@spexeyewear", mentions: 1, lat: -39.63858, lng: 176.84120, street: "213 Heretaunga St West", category: "retail", zone: "west", verified: true },
+  { name: "Farmers", handle: "@farmersnz", mentions: 1, lat: -39.63890, lng: 176.84040, street: "Heretaunga St West", category: "retail", zone: "west" },
+  { name: "Whitcoulls", handle: "@whitcoulls_nz", mentions: 1, lat: -39.63892, lng: 176.84030, street: "Heretaunga St West", category: "retail", zone: "west" },
+  { name: "EB Games", handle: "@ebgamesnz", mentions: 1, lat: -39.63895, lng: 176.84020, street: "Heretaunga St West", category: "retail", zone: "west" },
+  { name: "Number One Shoes", handle: "@numberoneshoesandhannahs", mentions: 1, lat: -39.63898, lng: 176.84015, street: "Heretaunga St West", category: "retail", zone: "west" },
+  { name: "Bits n Bobear", handle: "@bitsnbobear", mentions: 1, lat: -39.63907, lng: 176.83998, street: "Bay Plaza", category: "retail", zone: "west" },
+  { name: "Saddlery Warehouse", handle: "@saddlery_warehouse", mentions: 1, lat: -39.63920, lng: 176.83970, street: "Heretaunga St West", category: "retail", zone: "west" },
+  { name: "Rivers to Ranges", handle: "@rivers_to_ranges", mentions: 1, lat: -39.63918, lng: 176.83975, street: "Heretaunga St West", category: "retail", zone: "west" },
+  { name: "JoJoBee Earrings", handle: "@love.jojobee", mentions: 2, lat: -39.63780, lng: 176.83940, street: "104 Karamu Rd North", category: "retail", zone: "west", verified: true },
+  { name: "Aspyre Fitness", handle: "@aspyrefitness", mentions: 1, lat: -39.63920, lng: 176.83960, street: "Heretaunga St West", category: "services", zone: "west" },
+  { name: "Flex Fitness", handle: "@flexfitnesshastings", mentions: 1, lat: -39.63925, lng: 176.83955, street: "Heretaunga St West", category: "services", zone: "west" },
+  { name: "Kupa Martial Arts", handle: "@kupa_international_martialarts", mentions: 1, lat: -39.63928, lng: 176.83950, street: "Heretaunga St West", category: "services", zone: "west" },
+  { name: "Rezpect Dance", handle: "@rezpectdanceacademy", mentions: 1, lat: -39.63930, lng: 176.83945, street: "Heretaunga St West", category: "services", zone: "west" },
+  { name: "Waiaro Water Centre", handle: "@waiarohawatercentre", mentions: 5, lat: -39.64020, lng: 176.83900, street: "Queen St West", category: "arts", zone: "west" },
+
+  // ═══ OTHER / OFF HERETAUNGA ═══
+  { name: "Dr Feel Good", handle: "@drfeelgood.nz", mentions: 2, lat: -39.63660, lng: 176.84480, street: "204 Warren St North", category: "services", zone: "other", verified: true },
+  { name: "Sano Health", handle: "@sano_health_nz", mentions: 3, lat: -39.63950, lng: 176.84400, street: "109 Lyndon Rd East", category: "services", zone: "other", verified: true },
+  { name: "Waiāpu Road", handle: "@waiapuroad", mentions: 1, lat: -39.63855, lng: 176.84185, street: "Waiāpu Rd", category: "arts", zone: "other" },
+];
+
+// ═══ COMPUTE STATS ═══
+const eastBiz = businesses.filter(b => b.zone === 'east');
+const westBiz = businesses.filter(b => b.zone === 'west');
+const otherBiz = businesses.filter(b => b.zone === 'other');
+const eastMentions = eastBiz.reduce((s, b) => s + b.mentions, 0);
+const westMentions = westBiz.reduce((s, b) => s + b.mentions, 0);
+const otherMentions = otherBiz.reduce((s, b) => s + b.mentions, 0);
+const total = eastMentions + westMentions + otherMentions;
+
+document.getElementById('east-biz').textContent = eastBiz.length;
+document.getElementById('east-mentions').textContent = eastMentions;
+document.getElementById('east-avg').textContent = (eastMentions / eastBiz.length).toFixed(1);
+document.getElementById('west-biz').textContent = westBiz.length;
+document.getElementById('west-mentions').textContent = westMentions;
+document.getElementById('west-avg').textContent = (westMentions / westBiz.length).toFixed(1);
+
+const ePct = ((eastMentions / total) * 100).toFixed(0);
+const wPct = ((westMentions / total) * 100).toFixed(0);
+const oPct = ((otherMentions / total) * 100).toFixed(0);
+document.getElementById('bar-east').style.width = ePct + '%';
+document.getElementById('bar-east').textContent = ePct + '% East';
+document.getElementById('bar-west').style.width = wPct + '%';
+document.getElementById('bar-west').textContent = wPct + '% West';
+document.getElementById('bar-other').style.width = oPct + '%';
+document.getElementById('bar-other').textContent = oPct + '%';
+
+// ═══ MAP ═══
+const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-39.6385, 176.8420], 16);
+L.control.zoom({ position: 'topright' }).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+
+// East zone highlight
+L.polygon([[-39.6345,176.8415],[-39.6345,176.8500],[-39.6430,176.8500],[-39.6430,176.8415]], {
+  color: '#ff4d4d', weight: 1.5, dashArray: '6,4', fillColor: '#ff4d4d', fillOpacity: 0.04
+}).addTo(map);
+
+// West zone highlight
+L.polygon([[-39.6345,176.8370],[-39.6345,176.8415],[-39.6430,176.8415],[-39.6430,176.8370]], {
+  color: '#60a5fa', weight: 1.5, dashArray: '6,4', fillColor: '#60a5fa', fillOpacity: 0.04
+}).addTo(map);
+
+// Divider line at Railway Rd / Hastings St
+L.polyline([[-39.6345, 176.8415], [-39.6430, 176.8415]], {
+  color: '#fbbf24', weight: 2, dashArray: '8,6', opacity: 0.7
+}).addTo(map);
+
+L.marker([-39.6355, 176.8415], {
+  icon: L.divIcon({ className: 'zone-divider-label', html: '← WEST | EAST →', iconSize: [160,22], iconAnchor: [80,11] })
+}).addTo(map);
+
+// Zone labels on map
+L.marker([-39.6425, 176.8460], {
+  icon: L.divIcon({ className: 'gap-zone-label', html: 'EAST ZONE', iconSize: [100,20], iconAnchor: [50,10] })
+}).addTo(map);
+L.marker([-39.6425, 176.8390], {
+  icon: L.divIcon({ className: 'gap-zone-label', html: 'WEST ZONE', iconSize: [100,20], iconAnchor: [50,10] })
+}).addTo(map);
+
+// ═══ MARKERS ═══
+function getColor(zone) {
+  if (zone === 'east') return '#ff4d4d';
+  if (zone === 'west') return '#60a5fa';
+  return '#888';
+}
+
+const markers = [];
+businesses.forEach(biz => {
+  const r = Math.max(5, 3 + Math.sqrt(biz.mentions) * 3.5);
+  const op = Math.min(0.95, 0.45 + biz.mentions * 0.06);
+  const c = getColor(biz.zone);
+  const m = L.circleMarker([biz.lat, biz.lng], {
+    radius: r, fillColor: c, fillOpacity: op, color: c,
+    weight: biz.mentions >= 5 ? 2 : 1, opacity: 0.8
+  }).addTo(map);
+  const zCls = biz.zone === 'east' ? 'ez' : biz.zone === 'west' ? 'wz' : 'oz';
+  const mCls = biz.zone === 'east' ? 'east-m' : biz.zone === 'west' ? 'west-m' : 'other-m';
+  m.bindPopup(`<div class="popup-name">${biz.name}</div><div class="popup-mentions ${mCls}">${biz.mentions}× mentioned</div><div class="popup-address">${biz.street}${biz.verified ? ' ✓' : ''}</div><div class="popup-zone ${zCls}">${biz.zone === 'east' ? 'Heretaunga East' : biz.zone === 'west' ? 'Heretaunga West' : 'Off Heretaunga'}</div>`);
+  m.bizData = biz;
+  markers.push(m);
+});
+
+// ═══ SIDEBAR ═══
+let currentFilter = 'all', searchTerm = '';
+function renderList() {
+  const list = document.getElementById('business-list');
+  const heading = document.getElementById('list-heading');
+  const filtered = businesses
+    .filter(b => currentFilter === 'all' || b.zone === currentFilter)
+    .filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm) || b.handle.toLowerCase().includes(searchTerm))
+    .sort((a, b) => b.mentions - a.mentions);
+
+  const labels = { all: 'All Businesses', east: 'Heretaunga East', west: 'Heretaunga West', other: 'Off Heretaunga' };
+  heading.textContent = labels[currentFilter] + ` (${filtered.length})`;
+
+  list.innerHTML = filtered.map(b => {
+    const tagCls = b.zone === 'east' ? 'east-tag' : b.zone === 'west' ? 'west-tag' : 'other-tag';
+    const tagLabel = b.zone === 'east' ? 'E' : b.zone === 'west' ? 'W' : '•';
+    const c = getColor(b.zone);
+    return `<div class="business-item" data-lat="${b.lat}" data-lng="${b.lng}">
+      <div class="mention-count" style="color:${c}">${b.mentions}×</div>
+      <div><div class="business-name">${b.name}<span class="zone-tag ${tagCls}">${tagLabel}</span></div><div class="business-street">${b.street}</div></div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.business-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const lat = parseFloat(item.dataset.lat), lng = parseFloat(item.dataset.lng);
+      map.setView([lat, lng], 18);
+      markers.forEach(m => { if (Math.abs(m.bizData.lat - lat) < 0.0001 && Math.abs(m.bizData.lng - lng) < 0.0001) m.openPopup(); });
+    });
+  });
+
+  markers.forEach(m => {
+    const mf = currentFilter === 'all' || m.bizData.zone === currentFilter;
+    const ms = !searchTerm || m.bizData.name.toLowerCase().includes(searchTerm) || m.bizData.handle.toLowerCase().includes(searchTerm);
+    const show = mf && ms;
+    m.setStyle({
+      fillOpacity: show ? Math.min(0.95, 0.45 + m.bizData.mentions * 0.06) : 0.04,
+      opacity: show ? 0.8 : 0.04
+    });
+  });
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderList();
+  });
+});
+document.getElementById('search-input').addEventListener('input', e => { searchTerm = e.target.value.toLowerCase(); renderList(); });
+renderList();
+</script>
+</body>
+</html>

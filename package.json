@@ -1,0 +1,15 @@
+{
+  "name": "hastings-spotlight",
+  "version": "1.0.0",
+  "description": "Who Gets the Spotlight? — Coverage analysis of @hastingscitynz Instagram",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
